@@ -1,27 +1,27 @@
-export default async function handler(req, res) {
-    if (req.method === 'POST') {
-      const { state, timestamp } = req.body;
-  
-      try {
-        // Call your backend or database here to handle the LED state
-        const response = await fetch('https://hardware-sigma.vercel.app/api/ledstate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ state, timestamp }),
-        });
-  
-        const result = await response.json();
-  
-        // Respond to the frontend
-        res.status(200).json(result);
-      } catch (error) {
-        res.status(500).json({ message: 'Failed to set LED state', error: error.message });
-      }
-    } else {
-      // Handle any other HTTP method
-      res.setHeader('Allow', ['POST']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+import { NextResponse } from 'next/server';
+import { Client } from 'pg';
+
+const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+});
+
+client.connect();
+
+export async function POST(request) {
+    try {
+        const data = await request.json();
+        const { state, timestamp } = data;
+
+        await client.query(
+            'INSERT INTO led_states (state, timestamp) VALUES ($1, $2)',
+            [state, timestamp]
+        );
+
+        return NextResponse.json({ message: 'Data received and stored', data });
+    } catch (error) {
+        console.error('Error processing data:', error);
+        return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
+    } finally {
+        client.end(); // Make sure to close the connection
     }
-  }  
+}
