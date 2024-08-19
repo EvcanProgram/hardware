@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const { action } = req.query; // e.g., 'action=red' or 'action=off'
 
   // Define the URL of the Raspberry Pi Pico or Espruino device
-  const deviceUrl = 'http://<your-raspberry-pi-ip>'; // Change to gnrok lat
+  const deviceUrl = 'https://78f8-27-55-93-151.ngrok-free.app'; // Change to gnrok lat
 
   try {
     const response = await axios.get(`${deviceUrl}/${action}`);
