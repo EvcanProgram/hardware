@@ -1,7 +1,7 @@
+//call db data to showing on fontend
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
-// Create a pool of connections
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });

@@ -1,3 +1,4 @@
+//(still not in use and not complete data) make data
 import { NextResponse } from 'next/server';
 import { Client } from 'pg';
 
@@ -22,6 +23,6 @@ export async function POST(request) {
         console.error('Error processing data:', error);
         return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
     } finally {
-        client.end(); // Make sure to close the connection
+        client.end();
     }
 }
