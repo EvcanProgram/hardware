@@ -8,7 +8,7 @@ export async function POST(request) {
         let picoResponse;
 
         // Set the URL of the Raspberry Pi Pico server
-        const PICO_URL = 'https://5108-223-24-154-51.ngrok-free.app';
+        const PICO_URL = 'https://0510-223-24-157-20.ngrok-free.app';
 
         // Send a request to the Pico based on the action
         if (data.action === 'red') {
