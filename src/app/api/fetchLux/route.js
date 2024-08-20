@@ -1,4 +1,3 @@
-//call db data to showing on fontend
 import { NextResponse } from 'next/server';
 import { Pool } from 'pg';
 
