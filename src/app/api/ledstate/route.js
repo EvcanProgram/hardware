@@ -6,7 +6,7 @@ export async function POST(request) {
         console.log('Received data:', data);
 
         let picoResponse;
-        const PICO_URL = 'https://59b0-223-24-60-80.ngrok-free.app';
+        const PICO_URL = 'https://609c-2001-44c8-45c3-9f77-b487-7986-3752-6e25.ngrok-free.app';
 
         if (data.action === 'red') {
             picoResponse = await fetch(`${PICO_URL}/red`);
