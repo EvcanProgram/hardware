@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 
 const PICO_URL = 'https://a62a-2405-9800-b911-26af-756e-da1b-281a-85ed.ngrok-free.app';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Adjust this as per your security needs
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+
 export async function POST(request) {
   try {
     const data = await request.json();
     console.log('Received data:', data);
 
-    // Define the endpoints
     const endpoints = {
       fetch_all: [
         '/print_lux',
@@ -19,7 +25,6 @@ export async function POST(request) {
 
     let picoResponses = {};
 
-    // Fetch data from all endpoints if action is 'fetch_all'
     if (data.action === 'fetch_all') {
       for (const endpoint of endpoints.fetch_all) {
         const picoResponse = await fetch(`${PICO_URL}${endpoint}`);
@@ -32,19 +37,23 @@ export async function POST(request) {
 
       console.log('Pico responses:', picoResponses);
 
-      return NextResponse.json({ message: 'All data fetched successfully', data: picoResponses });
+      return NextResponse.json(
+        { message: 'All data fetched successfully', data: picoResponses },
+        { headers: corsHeaders } // Add CORS headers here
+      );
     }
 
-    // Handle other cases or invalid action
-    return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Invalid action' },
+      { status: 400, headers: corsHeaders } // Add CORS headers here
+    );
   } catch (error) {
     console.error('Error processing request:', error);
-    return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Error processing data', error: error.message },
+      { status: 500, headers: corsHeaders } // Add CORS headers here
+    );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ message: 'Please use POST to fetch data' }, { status: 405 });
 }
 
 export async function OPTIONS() {
@@ -54,6 +63,7 @@ export async function OPTIONS() {
   }, {
     status: 200,
     headers: {
+      ...corsHeaders, // Apply CORS headers
       'Allow': 'POST',
     },
   });
