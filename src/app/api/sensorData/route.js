@@ -46,3 +46,15 @@ export async function POST(request) {
 export async function GET() {
   return NextResponse.json({ message: 'Please use POST to fetch data' }, { status: 405 });
 }
+
+export async function OPTIONS() {
+  return NextResponse.json({
+    message: 'This endpoint only supports POST requests.',
+    allowedMethods: ['POST'],
+  }, {
+    status: 200,
+    headers: {
+      'Allow': 'POST',
+    },
+  });
+}
