@@ -1,51 +1,48 @@
 import { NextResponse } from 'next/server';
 
-let sensorData = {};
+const PICO_URL = 'https://a62a-2405-9800-b911-26af-756e-da1b-281a-85ed.ngrok-free.app';
 
-export async function handler(req) {
-  const { method } = req;
+export async function POST(request) {
+  try {
+    const data = await request.json();
+    console.log('Received data:', data);
 
-  if (method === 'OPTIONS') {
-    return NextResponse.json(
-      { message: 'CORS preflight OK' },
-      {
-        status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*', // or specify your allowed origin
-          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        },
-      }
-    );
-  }
+    // Define the endpoints
+    const endpoints = {
+      fetch_all: [
+        '/print_lux',
+        '/print_temp',
+        '/print_raindrop',
+        '/print_vibration',
+      ],
+    };
 
-  switch (method) {
-    case 'POST':
-      try {
-        const data = await req.json();
-        console.log('Received data:', data);
+    let picoResponses = {};
 
-        sensorData = {
-          lux: data.lux,
-          temperature: data.temperature,
-          raindrop_status: data.raindrop_status,
-          raindrop_value: data.raindrop_value,
-          vibration_status: data.vibration_status,
-          timestamp: new Date().toISOString(),
-        };
-
-        return NextResponse.json({ message: 'Data received successfully' }, { status: 200 });
-      } catch (error) {
-        console.error('Error processing POST request:', error);
-        return NextResponse.json({ message: 'Error processing request', error: error.message }, { status: 500 });
+    // Fetch data from all endpoints if action is 'fetch_all'
+    if (data.action === 'fetch_all') {
+      for (const endpoint of endpoints.fetch_all) {
+        const picoResponse = await fetch(`${PICO_URL}${endpoint}`);
+        if (picoResponse.ok) {
+          picoResponses[endpoint] = await picoResponse.text();
+        } else {
+          picoResponses[endpoint] = `Error fetching data from ${endpoint}`;
+        }
       }
 
-    case 'GET':
-      return NextResponse.json(sensorData, { status: 200 });
+      console.log('Pico responses:', picoResponses);
 
-    default:
-      return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
+      return NextResponse.json({ message: 'All data fetched successfully', data: picoResponses });
+    }
+
+    // Handle other cases or invalid action
+    return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
   }
 }
 
-export { handler as POST, handler as GET, handler as DELETE, handler as PUT, handler as HEAD, handler as OPTIONS };
+export async function GET() {
+  return NextResponse.json({ message: 'Please use POST to fetch data' }, { status: 405 });
+}

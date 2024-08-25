@@ -12,19 +12,27 @@ export default function Page() {
 
   const fetchSensorData = async () => {
     try {
-      setLoadingSensor(true); // Ensure you show a loading state while fetching data
-      const response = await fetch('/api/sensorData'); // Fetch data from your backend API
+      setLoadingSensor(true); // Show loading state
+      const response = await fetch('/api/sensorData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'fetch_all' }), // Send action to fetch all data
+      });
+  
       if (!response.ok) {
-        throw new Error('Failed to fetch sensor data'); // Handle non-200 responses
+        throw new Error('Failed to fetch sensor data'); // Handle errors
       }
-      const result = await response.json(); // Parse the JSON data
-      console.log('Fetched sensor data:', result); // Log the data for debugging
-      setSensorData(result || {}); // Update state with the fetched data
+  
+      const result = await response.json(); // Parse JSON
+      console.log('Fetched sensor data:', result); // Debug
+      setSensorData(result || {}); // Update state with data
     } catch (error) {
-      console.error('Error fetching sensor data:', error); // Log any errors
-      setErrorSensor(error.message); // Update state to show an error message
+      console.error('Error fetching sensor data:', error); // Handle errors
+      setErrorSensor(error.message); // Show error
     } finally {
-      setLoadingSensor(false); // Ensure loading state is cleared
+      setLoadingSensor(false); // Hide loading state
     }
   };
 
