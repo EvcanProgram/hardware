@@ -10,39 +10,41 @@ export default function Page() {
   const [errorSensor, setErrorSensor] = useState(null);
   const [errorLux, setErrorLux] = useState(null);
 
+  const fetchSensorData = async () => {
+    try {
+      setLoadingSensor(true); // Ensure you show a loading state while fetching data
+      const response = await fetch('/api/sensorData'); // Fetch data from your backend API
+      if (!response.ok) {
+        throw new Error('Failed to fetch sensor data'); // Handle non-200 responses
+      }
+      const result = await response.json(); // Parse the JSON data
+      console.log('Fetched sensor data:', result); // Log the data for debugging
+      setSensorData(result || {}); // Update state with the fetched data
+    } catch (error) {
+      console.error('Error fetching sensor data:', error); // Log any errors
+      setErrorSensor(error.message); // Update state to show an error message
+    } finally {
+      setLoadingSensor(false); // Ensure loading state is cleared
+    }
+  };
+
+  const fetchLuxData = async () => {
+    try {
+      const response = await fetch('/api/fetchLux');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const result = await response.json();
+      console.log('Fetched lux data:', result.data); // Debugging line
+      setLuxData(result.data || []);
+    } catch (error) {
+      setErrorLux(error.message);
+    } finally {
+      setLoadingLux(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSensorData = async () => {
-      try {
-        const response = await fetch('/api/sensorData');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const result = await response.json();
-        console.log('Fetched sensor data:', result);
-        setSensorData(result || {});
-      } catch (error) {
-        setErrorSensor(error.message);
-      } finally {
-        setLoadingSensor(false);
-      }
-    };
-
-    const fetchLuxData = async () => {
-      try {
-        const response = await fetch('/api/fetchLux');
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        const result = await response.json();
-        console.log('Fetched lux data:', result.data); // Debugging line
-        setLuxData(result.data || []);
-      } catch (error) {
-        setErrorLux(error.message);
-      } finally {
-        setLoadingLux(false);
-      }
-    };
-
     fetchSensorData();
     fetchLuxData();
   }, []);
@@ -77,6 +79,7 @@ export default function Page() {
   if (errorSensor) return <p className="text-center text-red-500">Error: {errorSensor}</p>;
   if (errorLux) return <p className="text-center text-red-500">Error: {errorLux}</p>;
 
+  
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-center mb-6 text-black">PHUW022 Data Display</h1>
@@ -96,6 +99,12 @@ export default function Page() {
         ) : (
           <p className="text-center text-gray-500">No sensor data available</p>
         )}
+        <button
+          onClick={fetchSensorData}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+        >
+          Fetch Sensor Data
+        </button>
       </div>
 
       {/* Lux Data Display */}
@@ -128,7 +137,7 @@ export default function Page() {
         </button>
         <button
           onClick={() => sendControlRequest('green')}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
         >
           Yellow
         </button>
@@ -136,7 +145,7 @@ export default function Page() {
           onClick={() => sendControlRequest('blue')}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
-          Green
+          Blue
         </button>
         <button
           onClick={() => sendControlRequest('off')}
