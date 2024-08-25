@@ -1,29 +1,50 @@
 import { NextResponse } from 'next/server';
 
+const PICO_URL = 'https://e0af-2405-9800-b911-26af-756e-da1b-281a-85ed.ngrok-free.app';
+
 export async function POST(request) {
-    try {
-        const data = await request.json();
-        console.log('Received data:', data);
-        //make sensor data post
-        let picoResponse;
-        const PICO_URL = 'https://8e91-2405-9800-b911-26af-756e-da1b-281a-85ed.ngrok-free.app';
+  try {
+    const data = await request.json();
+    console.log('Received data:', data);
 
-        if (data.action === 'red') {
-            picoResponse = await fetch(`${PICO_URL}/red`);
-        } else if (data.action === 'green') {
-            picoResponse = await fetch(`${PICO_URL}/green`);
-        } else if (data.action === 'blue') {
-            picoResponse = await fetch(`${PICO_URL}/blue`);
-        } else if (data.action === 'off') {
-            picoResponse = await fetch(`${PICO_URL}/off`);
-        }
+    let picoResponse;
+    let sensorEndpoint;
 
-        console.log('Pico response status:', picoResponse.status);
-        const picoData = await picoResponse.text();
-
-        return NextResponse.json({ message: 'Action performed on Pico', data: picoData });
-    } catch (error) {
-        console.error('Error processing request:', error);
-        return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
+    // Determine the endpoint to hit on the Python server based on the action
+    switch (data.action) {
+      case 'fetch_lux':
+        sensorEndpoint = '/print_lux';
+        break;
+      case 'fetch_temp':
+        sensorEndpoint = '/print_temp';
+        break;
+      case 'fetch_raindrop':
+        sensorEndpoint = '/print_raindrop';
+        break;
+      case 'fetch_vibration':
+        sensorEndpoint = '/print_vibration';
+        break;
+      default:
+        return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
     }
+
+    // Make a request to the Python server
+    picoResponse = await fetch(`${PICO_URL}${sensorEndpoint}`);
+    if (!picoResponse.ok) {
+      throw new Error('Failed to fetch data from Python server');
+    }
+    const picoData = await picoResponse.text();
+
+    console.log('Pico response data:', picoData);
+
+    // Return the data from the Python server back to the frontend
+    return NextResponse.json({ message: 'Data fetched successfully', data: picoData });
+  } catch (error) {
+    console.error('Error processing request:', error);
+    return NextResponse.json({ message: 'Error processing data', error: error.message }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  return NextResponse.json({ message: 'Please use POST to fetch data' }, { status: 405 });
 }

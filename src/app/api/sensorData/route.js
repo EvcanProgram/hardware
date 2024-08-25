@@ -43,8 +43,6 @@ export async function handler(req) {
     case 'GET':
       return NextResponse.json(sensorData, { status: 200 });
 
-    // Add more cases as needed for other methods like PUT, DELETE, etc.
-
     default:
       return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
   }
