@@ -1,35 +1,55 @@
 'use client';
-//not auto fetch
+//db not auto fetch (dont mind this comment)
 import { useEffect, useState } from 'react';
-
+//dont forget to make button (dont mind this comment)
 export default function Page() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [sensorData, setSensorData] = useState(null);
+  const [luxData, setLuxData] = useState([]);
+  const [loadingSensor, setLoadingSensor] = useState(true);
+  const [loadingLux, setLoadingLux] = useState(true);
+  const [errorSensor, setErrorSensor] = useState(null);
+  const [errorLux, setErrorLux] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSensorData = async () => {
+      try {
+        const response = await fetch('/api/sensorData');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const result = await response.json();
+        console.log('Fetched sensor data:', result);
+        setSensorData(result || {});
+      } catch (error) {
+        setErrorSensor(error.message);
+      } finally {
+        setLoadingSensor(false);
+      }
+    };
+
+    const fetchLuxData = async () => {
       try {
         const response = await fetch('/api/fetchLux');
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const result = await response.json();
-        console.log('Fetched data:', result.data); // Debugging line
-        setData(result.data || []);
+        console.log('Fetched lux data:', result.data); // Debugging line
+        setLuxData(result.data || []);
       } catch (error) {
-        setError(error.message);
+        setErrorLux(error.message);
       } finally {
-        setLoading(false);
+        setLoadingLux(false);
       }
     };
 
-    fetchData();
+    fetchSensorData();
+    fetchLuxData();
   }, []);
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Invalid Date';
-    
+
     const date = new Date(timestamp);
     return date.toLocaleString(); // Customize as needed
   };
@@ -53,27 +73,52 @@ export default function Page() {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-500">Loading...</p>;
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  if (loadingSensor || loadingLux) return <p className="text-center text-gray-500">Loading...</p>;
+  if (errorSensor) return <p className="text-center text-red-500">Error: {errorSensor}</p>;
+  if (errorLux) return <p className="text-center text-red-500">Error: {errorLux}</p>;
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-center mb-6 text-black">PHUW022 DB</h1>
-      <ul className="space-y-4">
-        {data.length > 0 ? (
-          data.map((row) => (
-            <li key={row.id} className="p-4 bg-white rounded-lg shadow-sm">
-              <p className="text-sm text-gray-600"><span className="font-semibold">ID:</span> {row.id}</p>
-              <p className="text-sm text-gray-600"><span className="font-semibold">State:</span> {row.state}</p>
-              <p className="text-sm text-gray-600"><span className="font-semibold">Timestamp:</span> {formatDate(row.timestamp)}</p>
-              <p className="text-sm text-gray-600"><span className="font-semibold">Status:</span> {row.status}</p>
-              <p className="text-sm text-gray-600"><span className="font-semibold">Lux:</span> {row.lux}</p>
-            </li>
-          ))
+      <h1 className="text-2xl font-bold text-center mb-6 text-black">PHUW022 Data Display</h1>
+
+      {/* Sensor Data Display */}
+      <div className="p-4 bg-white rounded-lg shadow-sm mb-6">
+        <h2 className="text-xl font-semibold text-black mb-4">Sensor Data</h2>
+        {sensorData ? (
+          <div>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Lux:</span> {sensorData.lux}</p>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Temperature:</span> {sensorData.temperature} °C</p>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Raindrop Status:</span> {sensorData.raindrop_status}</p>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Raindrop Value:</span> {sensorData.raindrop_value}</p>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Vibration Status:</span> {sensorData.vibration_status}</p>
+            <p className="text-sm text-gray-600"><span className="font-semibold">Timestamp:</span> {formatDate(sensorData.timestamp)}</p>
+          </div>
         ) : (
-          <li className="text-center text-gray-500">No data available</li>
+          <p className="text-center text-gray-500">No sensor data available</p>
         )}
-      </ul>
+      </div>
+
+      {/* Lux Data Display */}
+      <div className="p-4 bg-white rounded-lg shadow-sm">
+        <h2 className="text-xl font-semibold text-black mb-4">Lux Data</h2>
+        <ul className="space-y-4">
+          {luxData.length > 0 ? (
+            luxData.map((row) => (
+              <li key={row.id} className="p-4 bg-gray-50 rounded-lg shadow-sm">
+                <p className="text-sm text-gray-600"><span className="font-semibold">ID:</span> {row.id}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">State:</span> {row.state}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Timestamp:</span> {formatDate(row.timestamp)}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Status:</span> {row.status}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Lux:</span> {row.lux}</p>
+              </li>
+            ))
+          ) : (
+            <li className="text-center text-gray-500">No lux data available</li>
+          )}
+        </ul>
+      </div>
+
+      {/* LED Control Buttons */}
       <div className="mt-6 flex justify-center space-x-4">
         <button
           onClick={() => sendControlRequest('red')}

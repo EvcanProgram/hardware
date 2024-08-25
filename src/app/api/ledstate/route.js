@@ -4,9 +4,9 @@ export async function POST(request) {
     try {
         const data = await request.json();
         console.log('Received data:', data);
-
+        //make sensor data post
         let picoResponse;
-        const PICO_URL = 'https://fb3d-2001-44c8-45c3-9f77-cca4-271b-6e59-4f88.ngrok-free.app';
+        const PICO_URL = 'https://d57b-2405-9800-b911-26af-756e-da1b-281a-85ed.ngrok-free.app';
 
         if (data.action === 'red') {
             picoResponse = await fetch(`${PICO_URL}/red`);
