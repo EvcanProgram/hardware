@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const PICO_URL = 'https://17a3-27-55-93-42.ngrok-free.app';
+const PICO_URL = 'https://6504-27-55-70-71.ngrok-free.app';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*', // Adjust this as per your security needs
