@@ -1,49 +1,21 @@
 'use client';
-//db not auto fetch (dont mind this comment)
-import { useEffect, useState } from 'react';
-//dont forget to make button (dont mind this comment)
+import { useState } from 'react';
+
 export default function Page() {
   const [sensorData, setSensorData] = useState(null);
   const [luxData, setLuxData] = useState([]);
-  const [loadingSensor, setLoadingSensor] = useState(true);
-  const [loadingLux, setLoadingLux] = useState(true);
+  const [loadingSensor, setLoadingSensor] = useState(false);
+  const [loadingLux, setLoadingLux] = useState(false);
   const [errorSensor, setErrorSensor] = useState(null);
   const [errorLux, setErrorLux] = useState(null);
 
-  const fetchSensorData = async () => {
-    try {
-      setLoadingSensor(true); // Show loading state
-      const response = await fetch('/api/sensorData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'fetch_all' }), // Send action to fetch all data
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to fetch sensor data'); // Handle errors
-      }
-  
-      const result = await response.json(); // Parse JSON
-      console.log('Fetched sensor data:', result); // Debug
-      setSensorData(result || {}); // Update state with data
-    } catch (error) {
-      console.error('Error fetching sensor data:', error); // Handle errors
-      setErrorSensor(error.message); // Show error
-    } finally {
-      setLoadingSensor(false); // Hide loading state
-    }
-  };
-
   const fetchLuxData = async () => {
+    setLoadingLux(true);
     try {
       const response = await fetch('/api/fetchLux');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Network response was not ok');
+      
       const result = await response.json();
-      console.log('Fetched lux data:', result.data); // Debugging line
       setLuxData(result.data || []);
     } catch (error) {
       setErrorLux(error.message);
@@ -52,30 +24,41 @@ export default function Page() {
     }
   };
 
-  useEffect(() => {
-    fetchSensorData();
-    fetchLuxData();
-  }, []);
+  const fetchSensorData = async (sensorType) => {
+    setLoadingSensor(true);
+    try {
+      const response = await fetch(`/api/sensorData`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: sensorType }),
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch ${sensorType} data`);
+
+      const result = await response.json();
+      setSensorData({ ...sensorData, [sensorType]: result.data });
+    } catch (error) {
+      setErrorSensor(error.message);
+    } finally {
+      setLoadingSensor(false);
+    }
+  };
 
   const formatDate = (timestamp) => {
     if (!timestamp) return 'Invalid Date';
-
     const date = new Date(timestamp);
-    return date.toLocaleString(); // Customize as needed
+    return date.toLocaleString();
   };
 
   const sendControlRequest = async (action) => {
     try {
       const response = await fetch('/api/ledstate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Network response was not ok');
+
       const result = await response.json();
       console.log(result);
     } catch (error) {
@@ -83,11 +66,6 @@ export default function Page() {
     }
   };
 
-  if (loadingSensor || loadingLux) return <p className="text-center text-gray-500">Loading...</p>;
-  if (errorSensor) return <p className="text-center text-red-500">Error: {errorSensor}</p>;
-  if (errorLux) return <p className="text-center text-red-500">Error: {errorLux}</p>;
-
-  
   return (
     <div className="max-w-2xl mx-auto p-6 bg-gray-100 rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-center mb-6 text-black">PHUW022 Data Display</h1>
@@ -97,22 +75,41 @@ export default function Page() {
         <h2 className="text-xl font-semibold text-black mb-4">Sensor Data</h2>
         {sensorData ? (
           <div>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Lux:</span> {sensorData.lux}</p>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Temperature:</span> {sensorData.temperature} °C</p>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Raindrop Status:</span> {sensorData.raindrop_status}</p>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Raindrop Value:</span> {sensorData.raindrop_value}</p>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Vibration Status:</span> {sensorData.vibration_status}</p>
-            <p className="text-sm text-gray-600"><span className="font-semibold">Timestamp:</span> {formatDate(sensorData.timestamp)}</p>
+            {Object.keys(sensorData).map((key) => (
+              <p key={key} className="text-sm text-gray-600">
+                <span className="font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}:</span> {sensorData[key]}
+              </p>
+            ))}
           </div>
         ) : (
           <p className="text-center text-gray-500">No sensor data available</p>
         )}
-        <button
-          onClick={fetchSensorData}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-        >
-          Fetch Sensor Data
-        </button>
+        <div className="mt-4 space-y-2">
+          <button
+            onClick={() => fetchSensorData('lux')}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          >
+            Fetch Lux Data
+          </button>
+          <button
+            onClick={() => fetchSensorData('temperature')}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+          >
+            Fetch Temperature Data
+          </button>
+          <button
+            onClick={() => fetchSensorData('raindrop')}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+          >
+            Fetch Raindrop Data
+          </button>
+          <button
+            onClick={() => fetchSensorData('vibration')}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          >
+            Fetch Vibration Data
+          </button>
+        </div>
       </div>
 
       {/* Lux Data Display */}
@@ -144,7 +141,7 @@ export default function Page() {
           Red
         </button>
         <button
-          onClick={() => sendControlRequest('green')}
+          onClick={() => sendControlRequest('yellow')}
           className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
         >
           Yellow
